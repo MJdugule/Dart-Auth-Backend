@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dart_frog/dart_frog.dart';
 
 Handler middleware(Handler handler){
@@ -15,8 +13,8 @@ Handler middleware(Handler handler){
           'error': 'Malformed body payload: ${e.message}',
         },
       );
-    } catch (error, stackTrace) {
-      log('CRITICAL ERROR: $error\n$stackTrace');
+    } catch (error) {
+      // print('CRITICAL ERROR: $error\n$stackTrace');
       return Response.json(
         statusCode: 500,
         body: {
