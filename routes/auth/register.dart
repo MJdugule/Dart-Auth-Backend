@@ -1,8 +1,8 @@
 import 'package:bcrypt/bcrypt.dart';
+import 'package:dart_auth_backend/core/services/token_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -27,6 +27,9 @@ Future<Response> onRequest(RequestContext context) async {
   }
   final email = body['email'] as String;
   final password = body['password'] as String;
+  final firstname = body['firstname'] as String;
+  final lastname = body['lastname'] as String;
+  final referralCode = body['referralCode'] as String?;
 
   // if (email == null ||
   //     email.isEmpty ||
@@ -46,15 +49,26 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   final passwordHash = BCrypt.hashpw(password, BCrypt.gensalt());
-  final user = createUser(email: email, hashedPassword: passwordHash);
+  final user = createUser(
+    email: email,
+    hashedPassword: passwordHash,
+    firstname: firstname,
+    lastname: lastname,
+    referralCode: referralCode,
+  );
 
-  final jwt = JWT({'id': user?.id, 'email': user?.email});
-
-  final token = jwt.sign(SecretKey('no-gode'));
+  final tokens = TokenService.generateTokenPair(
+    user?.id ?? '',
+    user?.email ?? '',
+  );
 
   return Response.json(
     body: {
-      'data': {'user': user?.toJson(), 'token': token},
+      'data': {
+        'user': user?.toJson(),
+        'accessToken': tokens['accessToken'],
+        'refreshToken': tokens['refreshToken'],
+      },
     },
   );
   // } catch (e) {

@@ -1,8 +1,8 @@
 import 'package:bcrypt/bcrypt.dart';
+import 'package:dart_auth_backend/core/services/token_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -20,6 +20,9 @@ Future<Response> onRequest(RequestContext context) async {
     return Response.json(
       statusCode: 422, // 422 Unprocessable Entity for invalid data values
       body: {
+        'statusCode': 422,
+        'success': false,
+        'message': 'Unable to login',
         'data': null,
         'error': 'Validation failed',
         'details': validationErrors,
@@ -33,17 +36,28 @@ Future<Response> onRequest(RequestContext context) async {
   if (user == null || !BCrypt.checkpw(password, user.hashedPassword)) {
     return Response.json(
       statusCode: 401,
-      body: {'data': null, 'error': 'Invalid email or password'},
+      body: {
+        'statusCode': 401,
+        'success': false,
+        'message': 'Unable to login',
+        'data': null,
+        'error': 'Invalid email or password',
+      },
     );
   }
 
-  final jwt = JWT({'id': user.id, 'email': user.email});
-
-  final token = jwt.sign(SecretKey('no-gode'));
+  final tokens = TokenService.generateTokenPair(user.id, user.email);
 
   return Response.json(
     body: {
-      'data': {'user': user.toJson(), 'token': token},
+      'statusCode': 200,
+      'success': true,
+      'message': 'Successfully logged in',
+      'data': {
+        'user': user.toJson(),
+        'accessToken': tokens['accessToken'],
+        'refreshToken': tokens['refreshToken'],
+      },
     },
   );
   // } catch (e) {

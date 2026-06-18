@@ -48,10 +48,10 @@ class Validators {
   }
 
   /// Validate name
-  static Validator name({bool isRequired = true}) {
+  static Validator name({bool isRequired = true, String? text}) {
     return (String? value) {
       if ((value == null || value.trim().isEmpty) && isRequired) {
-        return 'Field cannot be empty.';
+        return text ?? 'Field cannot be empty.';
       }
       return null;
 
@@ -202,6 +202,19 @@ class Validators {
   static String getCleanedNumber(String text) {
     final regExp = RegExp('[^0-9]');
     return text.replaceAll(regExp, '');
+  }
+
+  /// Checks for unwanted keys
+  static String? checkUnknownKeys(
+    Map<String, dynamic> body,
+    List<String> allowedKeys,
+  ) {
+    for (final key in body.keys) {
+      if (!allowedKeys.contains(key)) {
+        return 'Unexpected property "$key" is not allowed in this request.';
+      }
+    }
+    return null;
   }
 
   // static int convertYearTo4Digits(int year) {
