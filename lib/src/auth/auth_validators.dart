@@ -73,4 +73,29 @@ extension AuthValidators on Validator {
 
     return errors.isEmpty ? null : errors;
   }
+
+  /// Validates otp body
+  static Map<String, String>? validateVerifyPayload(Map<String, dynamic> body) {
+    final errors = <String, String>{};
+
+    const allowedFields = ['otp'];
+    final structuralError = Validators.checkUnknownKeys(body, allowedFields);
+    if (structuralError != null) {
+      errors['body'] = structuralError;
+      return errors;
+    }
+
+    final otp = body['otp'] as String?;
+
+    if (otp == null || otp.trim().isEmpty) {
+      errors['otp'] = 'OTP code is required.';
+    } else {
+      final cleanOtp = otp.trim();
+      if (cleanOtp.length != 6 || int.tryParse(cleanOtp) == null) {
+        errors['otp'] = 'OTP must be exactly a 6-digit number.';
+      }
+    }
+
+    return errors.isEmpty ? null : errors;
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:bcrypt/bcrypt.dart';
+import 'package:dart_auth_backend/core/services/email_service.dart';
 import 'package:dart_auth_backend/core/services/token_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/auth/auth_validators.dart';
@@ -49,25 +50,43 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   final passwordHash = BCrypt.hashpw(password, BCrypt.gensalt());
-  final user = createUser(
-    email: email,
-    hashedPassword: passwordHash,
+  final otp = EmailService.generateOtp();
+  final accessToken = TokenService.generateRegistrationToken(
     firstname: firstname,
     lastname: lastname,
+    email: email,
+    hashedPassword: passwordHash,
+    otp: otp,
     referralCode: referralCode,
   );
 
-  final tokens = TokenService.generateTokenPair(
-    user?.id ?? '',
-    user?.email ?? '',
-  );
+  
+
+  await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
+
+  // final user = createUser(
+  //   email: email,
+  //   hashedPassword: passwordHash,
+  //   firstname: firstname,
+  //   lastname: lastname,
+  //   referralCode: referralCode,
+  // );
+
+  // final tokens = TokenService.generateTokenPair(
+  //   user?.id ?? '',
+  //   user?.email ?? '',
+  // );
 
   return Response.json(
     body: {
+      'statusCode': 200,
+      'success': true,
+      'message':
+          'Used the registration token to verify the otp sent to your email',
       'data': {
-        'user': user?.toJson(),
-        'accessToken': tokens['accessToken'],
-        'refreshToken': tokens['refreshToken'],
+        // 'user': user?.toJson(),
+        'registrationToken': accessToken,
+        // 'refreshToken': tokens['refreshToken'],
       },
     },
   );
