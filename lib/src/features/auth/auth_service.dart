@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:dart_auth_backend/src/auth/auth_model.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_model.dart';
 import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();

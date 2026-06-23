@@ -1,4 +1,4 @@
-import 'package:dart_auth_backend/core/validators.dart';
+import 'package:dart_auth_backend/src/core/validators.dart';
 
 ///
 extension AuthValidators on Validator {
@@ -78,23 +78,16 @@ extension AuthValidators on Validator {
   static Map<String, String>? validateVerifyPayload(Map<String, dynamic> body) {
     final errors = <String, String>{};
 
-    const allowedFields = ['otp'];
+    const allowedFields = ['email'];
     final structuralError = Validators.checkUnknownKeys(body, allowedFields);
     if (structuralError != null) {
       errors['body'] = structuralError;
       return errors;
     }
 
-    final otp = body['otp'] as String?;
-
-    if (otp == null || otp.trim().isEmpty) {
-      errors['otp'] = 'OTP code is required.';
-    } else {
-      final cleanOtp = otp.trim();
-      if (cleanOtp.length != 6 || int.tryParse(cleanOtp) == null) {
-        errors['otp'] = 'OTP must be exactly a 6-digit number.';
-      }
-    }
+    final email = body['email'] as String?;
+    final emailError = Validators.email()(email);
+    if (emailError != null) errors['email'] = emailError;
 
     return errors.isEmpty ? null : errors;
   }

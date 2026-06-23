@@ -1,7 +1,7 @@
 import 'package:bcrypt/bcrypt.dart';
-import 'package:dart_auth_backend/core/services/token_service.dart';
-import 'package:dart_auth_backend/src/auth/auth_service.dart';
-import 'package:dart_auth_backend/src/auth/auth_validators.dart';
+import 'package:dart_auth_backend/src/core/services/token_service.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
 
 Future<Response> onRequest(RequestContext context) async {

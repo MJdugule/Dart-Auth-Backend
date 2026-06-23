@@ -1,4 +1,4 @@
-import 'package:dart_auth_backend/core/extensions.dart';
+import 'package:dart_auth_backend/src/core/extensions.dart';
 
 /// Validators
 class Validators {

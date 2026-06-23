@@ -1,8 +1,8 @@
 import 'package:bcrypt/bcrypt.dart';
-import 'package:dart_auth_backend/core/services/email_service.dart';
-import 'package:dart_auth_backend/core/services/token_service.dart';
-import 'package:dart_auth_backend/src/auth/auth_service.dart';
-import 'package:dart_auth_backend/src/auth/auth_validators.dart';
+import 'package:dart_auth_backend/src/core/services/email_service.dart';
+import 'package:dart_auth_backend/src/core/services/token_service.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
 
 Future<Response> onRequest(RequestContext context) async {
@@ -50,19 +50,19 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   final passwordHash = BCrypt.hashpw(password, BCrypt.gensalt());
-  final otp = EmailService.generateOtp();
-  final accessToken = TokenService.generateRegistrationToken(
-    firstname: firstname,
-    lastname: lastname,
-    email: email,
-    hashedPassword: passwordHash,
-    otp: otp,
-    referralCode: referralCode,
-  );
+  // final otp = EmailService.generateOtp();
+  // final accessToken = TokenService.generateRegistrationToken(
+  //   firstname: firstname,
+  //   lastname: lastname,
+  //   email: email,
+  //   hashedPassword: passwordHash,
+  //   otp: otp,
+  //   referralCode: referralCode,
+  // );
 
   
 
-  await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
+  // await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
 
   // final user = createUser(
   //   email: email,
@@ -82,12 +82,12 @@ Future<Response> onRequest(RequestContext context) async {
       'statusCode': 200,
       'success': true,
       'message':
-          'Used the registration token to verify the otp sent to your email',
-      'data': {
+          'S',
+      // 'data': {
         // 'user': user?.toJson(),
-        'registrationToken': accessToken,
+        // 'registrationToken': accessToken,
         // 'refreshToken': tokens['refreshToken'],
-      },
+      // },
     },
   );
   // } catch (e) {
