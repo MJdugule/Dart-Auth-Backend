@@ -1,8 +1,10 @@
 import 'dart:io';
-
 import 'package:dart_auth_backend/src/core/services/email_service.dart';
+import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
+
+import '../../../../main.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -16,7 +18,7 @@ Future<Response> onRequest(RequestContext context) async {
 
   final body = await context.request.json() as Map<String, dynamic>;
   final email = body['email'] as String;
-  final firstname = body['firstname'] as String?;
+  final firstname = body['firstname'] as String? ?? '';
   final validationErrors = AuthValidators.validateVerifyPayload(body);
   if (validationErrors != null) {
     return Response.json(
@@ -30,8 +32,9 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   // final userEnteredOtp = (body['otp'] as String).trim();
-  final otp = EmailService.generateOtp();
-  // await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
+  // final emailService = EmailService();
+  final authService = AuthService(globalRedis, EmailService());
+  await authService.generateAndSendOtp(email: email, name: firstname);
   return Response.json(
     body: {
       'statusCode': 200,

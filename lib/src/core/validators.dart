@@ -86,6 +86,20 @@ class Validators {
     };
   }
 
+  /// Otp validatioin
+  static Validator otp([String? text]) {
+    return (String? value) {
+      if (value == null || value.isEmpty) return text ?? 'Otp is required';
+      final otptext = value.trim();
+      if (otptext.length != 6) {
+        return 'Otp must be 6 characters';
+      }
+
+      final regex = RegExp(r'^[A-Za-z0-9]+(-[A-Za-z0-9]+)?$');
+      return regex.hasMatch(otptext) ? null : (text ?? 'Invalid otp');
+    };
+  }
+
   /// min length checker
   static Validator minLength(int minLength) {
     return (String? value) {

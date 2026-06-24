@@ -6,7 +6,9 @@ class User {
     required this.email,
     required this.firstname,
     required this.lastname,
-    required this.hashedPassword,
+    required this.isActive,
+    required this.createdAt,
+    this.hashedPassword,
     this.referralCode,
   });
 
@@ -23,10 +25,38 @@ class User {
   final String lastname;
 
   /// password
-  final String hashedPassword;
+  final String? hashedPassword;
 
   /// referralCode
   final String? referralCode;
+
+  /// isActive
+  final bool isActive;
+
+  /// createdAt
+  final String createdAt;
+
+  /// Copywith constructor
+  User copyWith({
+    String? id,
+    String? email,
+    String? firstname,
+    String? lastname,
+    String? hashedPassword,
+    String? referralCode,
+    bool? isActive,
+    String? createdAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      firstname: firstname ?? this.firstname,
+      lastname: lastname ?? this.lastname,
+      hashedPassword: hashedPassword ?? this.hashedPassword,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   /// toJson
   Map<String, dynamic> toJson() {
@@ -35,7 +65,10 @@ class User {
       'email': email,
       'firstname': firstname,
       'lastname': lastname,
+      if (hashedPassword != null)'hashedPassword': hashedPassword,
       if (referralCode != null) 'referralCode': referralCode,
+      'isActive': isActive,
+      'createdAt': createdAt,
     };
   }
 }

@@ -3,7 +3,7 @@ import 'package:redis/redis.dart';
 ///
 class RedisService {
   late final Command _command;
-  late final PubSub _pubsub;
+  // late final PubSub _pubsub;
 
   /// Initialize redis
   Future<void> initialize({required String host, required int port}) async {
@@ -23,7 +23,6 @@ class RedisService {
     required String value,
     required Duration duration,
   }) async {
-    // 'setex' means: SET key with EXpiration time in seconds
     await _command.send_object([
       'SETEX', 
       key, 
@@ -41,6 +40,6 @@ class RedisService {
   /// Enforces a strict 60-second cooldown window between generation checks
   Future<bool> checkOtpRateLimit(String email) async {
     final lastSentTimestamp = await getValue('cooldown:$email');
-    return lastSentTimestamp == null; // True means no active cooldown, safe to proceed
+    return lastSentTimestamp == null;
   }
 }

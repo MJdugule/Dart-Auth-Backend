@@ -1,36 +1,40 @@
 import 'dart:math';
+import 'package:dotenv/dotenv.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
 ///
 class EmailService {
+  // Config keys remain clean and private
+  ///
+   final env = DotEnv(includePlatformEnvironment: true)..load();
   static const _smtpUsername = 'apikey';
-  static const _sendGridApiKey = 'your send grid api key';
-  static const _verifiedSenderEmail = 'senders email'; 
+  //  String? get _sendGridApiKey => env['SEND_GRID_API'];
+  //  String? get _verifiedSenderEmail => env['VERIFIED_EMAIL'] ; 
 
   /// Generate OTP
-  static String generateOtp() {
-    final random = Random();
+  String generateOtp() {
+    final random = Random.secure();
     final code = 100000 + random.nextInt(900000);
     return code.toString();
   }
 
   /// Send OTP to Email
-  static Future<bool> sendOtpEmail({
+  Future<bool> sendOtpEmail({
     required String email,
     required String name,
-    required String otp
+    required String otp,
   }) async {
-     final smtpServer = SmtpServer(
+    final smtpServer = SmtpServer(
       'smtp.sendgrid.net', 
       port: 465,           
       ssl: true,           
       username: _smtpUsername,
-      password: _sendGridApiKey,
+      password: env['SEND_GRID_API'],
     );
     
-  final message = Message()
-      ..from = const Address(_verifiedSenderEmail,)
+    final message = Message()
+      ..from =  Address(env['VERIFIED_EMAIL']?? '', 'DART Backend')
       ..recipients.add(email)
       ..subject = 'Your Verification Code: $otp'
       ..html = '''
@@ -43,12 +47,9 @@ class EmailService {
       ''';
 
     try {
-      await send(message, smtpServer);
-      // final sendReport = await send(message, smtpServer);
-      // print('SMTP Delivery Success! Tracking report: $sendReport');
+     await send(message, smtpServer);
       return true;
     } catch (e) {
-      // print('SMTP Delivery Engine Failure Exception: $e');
       return false;
     }
   }

@@ -14,6 +14,7 @@ extension AuthValidators on Validator {
       'firstname',
       'lastname',
       'referralCode',
+      'otp',
     ];
     final bodyError = Validators.checkUnknownKeys(body, fields);
 
@@ -26,6 +27,7 @@ extension AuthValidators on Validator {
     final password = body['password'] as String?;
     final firstname = body['firstname'] as String?;
     final lastname = body['lastname'] as String?;
+    final otp = body['otp'] as String?;
     // final referralCode = body['refferalCode'] as String?;
 
     final emailError = Validators.email()(email);
@@ -33,6 +35,9 @@ extension AuthValidators on Validator {
 
     final passwordError = Validators.password()(password);
     if (passwordError != null) errors['password'] = passwordError;
+
+    final otpError = Validators.otp()(otp);
+    if (otpError != null) errors['otp'] = otpError;
 
     final firstnameError = Validators.name(text: 'First name is required')(
       firstname,
@@ -78,7 +83,27 @@ extension AuthValidators on Validator {
   static Map<String, String>? validateVerifyPayload(Map<String, dynamic> body) {
     final errors = <String, String>{};
 
-    const allowedFields = ['email'];
+    const fields = ['email', 'firstname'];
+    final structuralError = Validators.checkUnknownKeys(body, fields);
+    if (structuralError != null) {
+      errors['body'] = structuralError;
+      return errors;
+    }
+
+    final email = body['email'] as String?;
+    final emailError = Validators.email()(email);
+    if (emailError != null) errors['email'] = emailError;
+
+    return errors.isEmpty ? null : errors;
+  }
+
+  /// Validates OTP code verification payloads
+  static Map<String, String>? validateVerifyOtpPayload(
+    Map<String, dynamic> body,
+  ) {
+    final errors = <String, String>{};
+
+    const allowedFields = ['email', 'otp'];
     final structuralError = Validators.checkUnknownKeys(body, allowedFields);
     if (structuralError != null) {
       errors['body'] = structuralError;
@@ -88,6 +113,12 @@ extension AuthValidators on Validator {
     final email = body['email'] as String?;
     final emailError = Validators.email()(email);
     if (emailError != null) errors['email'] = emailError;
+
+    final otp = body['otp'] as String?;
+    final otpError = Validators.otp()(otp);
+    if (otpError != null) {
+      errors['otp'] = otpError;
+    }
 
     return errors.isEmpty ? null : errors;
   }

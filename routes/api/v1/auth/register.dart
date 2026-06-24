@@ -1,9 +1,12 @@
-import 'package:bcrypt/bcrypt.dart';
+import 'dart:io';
+
 import 'package:dart_auth_backend/src/core/services/email_service.dart';
 import 'package:dart_auth_backend/src/core/services/token_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
+
+import '../../../../main.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -30,6 +33,7 @@ Future<Response> onRequest(RequestContext context) async {
   final password = body['password'] as String;
   final firstname = body['firstname'] as String;
   final lastname = body['lastname'] as String;
+  final otp = body['otp'] as String;
   final referralCode = body['referralCode'] as String?;
 
   // if (email == null ||
@@ -49,7 +53,49 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-  final passwordHash = BCrypt.hashpw(password, BCrypt.gensalt());
+  final authService = AuthService(globalRedis, EmailService());
+
+  final createdUser = await authService.verifyAndRegisterUser(
+    globalMongo,
+    email: email,
+    password: password,
+    firstname: firstname,
+    lastname: lastname,
+    submittedOtp: otp,
+    referralCode: referralCode,
+  );
+
+  if (createdUser == null) {
+    return Response.json(
+      statusCode: HttpStatus.badRequest, // 400
+      body: {
+        'statusCode': 400,
+        'data': null,
+        'error': 'Invalid verification match',
+        'message': 'The verification code is invalid or has expired.',
+      },
+    );
+  }
+
+  final tokens = TokenService.generateTokenPair(
+    createdUser.id ,
+    createdUser.email,
+  );
+
+  return Response.json(
+    statusCode: HttpStatus.created, // 201 Created
+    body: {
+      'statusCode': 201,
+      'success': true,
+      'message': 'User registration completed successfully.',
+      'data': {
+        'user': createdUser.toJson(),
+        'accessToken': tokens['accessToken'],
+        'refreshToken': tokens['refreshToken'],
+      },
+    },
+  );
+
   // final otp = EmailService.generateOtp();
   // final accessToken = TokenService.generateRegistrationToken(
   //   firstname: firstname,
@@ -59,8 +105,6 @@ Future<Response> onRequest(RequestContext context) async {
   //   otp: otp,
   //   referralCode: referralCode,
   // );
-
-  
 
   // await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
 
@@ -77,19 +121,18 @@ Future<Response> onRequest(RequestContext context) async {
   //   user?.email ?? '',
   // );
 
-  return Response.json(
-    body: {
-      'statusCode': 200,
-      'success': true,
-      'message':
-          'S',
-      // 'data': {
-        // 'user': user?.toJson(),
-        // 'registrationToken': accessToken,
-        // 'refreshToken': tokens['refreshToken'],
-      // },
-    },
-  );
+  // return Response.json(
+  //   body: {
+  //     'statusCode': 200,
+  //     'success': true,
+  //     'message': 'S',
+  //     // 'data': {
+  //     // 'user': user?.toJson(),
+  //     // 'registrationToken': accessToken,
+  //     // 'refreshToken': tokens['refreshToken'],
+  //     // },
+  //   },
+  // );
   // } catch (e) {
   //   return Response.json(
   //     statusCode: 401,

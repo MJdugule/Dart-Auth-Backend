@@ -33,7 +33,7 @@ Future<Response> onRequest(RequestContext context) async {
   final password = body['password'] as String;
 
   final user = findUserByEmail(email);
-  if (user == null || !BCrypt.checkpw(password, user.hashedPassword)) {
+  if (user == null || !BCrypt.checkpw(password, user.hashedPassword ?? '')) {
     return Response.json(
       statusCode: 401,
       body: {
