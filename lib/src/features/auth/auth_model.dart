@@ -12,6 +12,20 @@ class User {
     this.referralCode,
   });
 
+    /// fromJson factory constructor
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'] as String,
+      email: json['email'] as String,
+      firstname: json['firstname'] as String,
+      lastname: json['lastname'] as String,
+      isActive: json['isActive'] as bool,
+      createdAt: json['createdAt'] as String,
+      hashedPassword: json['hashedPassword'] as String?,
+      referralCode: json['referralCode'] as String?,
+    );
+  }
+
   /// userId
   final String id;
 
@@ -53,19 +67,33 @@ class User {
       firstname: firstname ?? this.firstname,
       lastname: lastname ?? this.lastname,
       hashedPassword: hashedPassword ?? this.hashedPassword,
+      referralCode: referralCode ?? this.referralCode, // Note: Added missing assignment from your original copyWith
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   /// toJson
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJsonForDataBase() {
     return {
       'id': id,
       'email': email,
       'firstname': firstname,
       'lastname': lastname,
-      if (hashedPassword != null)'hashedPassword': hashedPassword,
+      if (hashedPassword != null) 'hashedPassword': hashedPassword,
+      if (referralCode != null) 'referralCode': referralCode,
+      'isActive': isActive,
+      'createdAt': createdAt,
+    };
+  }
+
+  /// toJson
+  Map<String, dynamic> toJsonForUser() {
+    return {
+      'id': id,
+      'email': email,
+      'firstname': firstname,
+      'lastname': lastname,
       if (referralCode != null) 'referralCode': referralCode,
       'isActive': isActive,
       'createdAt': createdAt,

@@ -1,6 +1,4 @@
 import 'package:bcrypt/bcrypt.dart';
-import 'package:collection/collection.dart';
-import 'package:dart_auth_backend/src/core/exceptions.dart';
 import 'package:dart_auth_backend/src/core/services/email_service.dart';
 import 'package:dart_auth_backend/src/core/services/redis_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_model.dart';
@@ -16,6 +14,8 @@ class AuthService {
 
   /// Email Class
   final EmailService emailService;
+
+  // final Mongo
 
   /// Handles the orchestration of generating, saving, and emailing the OTP
   Future<bool> generateAndSendOtp({
@@ -37,6 +37,11 @@ class AuthService {
     );
 
     return emailService.sendOtpEmail(email: email, name: name, otp: otp);
+  }
+
+  /// Checks whether an OTP can be sent based on the cooldown window.
+  Future<bool> canSendOtp(String email) async {
+    return redisService.checkOtpRateLimit(email);
   }
 
   /// verify otp code
@@ -71,24 +76,7 @@ class AuthService {
     required String submittedOtp,
     String? referralCode,
   }) async {
-    final isOtpValid = await verifyOtpCode(
-      email: email,
-      submittedOtp: submittedOtp,
-    );
-    if (!isOtpValid) {
-      return null;
-    }
-
     final usersCollection = mongoDb.collection('users');
-
-    final existingUser = await usersCollection.findOne(
-      where.eq('email', email),
-    );
-    if (existingUser != null) {
-      throw UserAlreadyExistsException(
-        'This email address is already linked to another account.',
-      );
-    }
     final secureHashedPassword = BCrypt.hashpw(
       password,
       BCrypt.gensalt(),
@@ -105,42 +93,38 @@ class AuthService {
     );
 
     await usersCollection.insertOne(
-      newUserProfile.copyWith(hashedPassword: secureHashedPassword).toJson(),
+      newUserProfile
+          .copyWith(hashedPassword: secureHashedPassword)
+          .toJsonForDataBase(),
     );
     return newUserProfile;
   }
+
+  /// find user by email
+  Future<User?> findUserByEmail(Db mongoDb, String email) async {
+    final usersCollection = mongoDb.collection('users');
+    final user = await usersCollection.findOne(where.eq('email', email));
+    if (user != null) {
+      return User.fromJson(user);
+    }
+    return null;
+  }
+
+  /// find user by id
+  Future<User?> findUserById(Db mongoDb, String id) async {
+    final usersCollection = mongoDb.collection('users');
+    final user = await usersCollection.findOne(where.eq('id', id));
+    if (user != null) {
+      return User.fromJson(user);
+    }
+    return null;
+  }
+
+  /// delete user by id
+  Future<bool> deleteUserById(Db mongoDb, String id) async {
+    final usersCollection = mongoDb.collection('users');
+    await usersCollection.deleteOne(where.eq('id', id));
+    final user = await usersCollection.findOne(where.eq('id', id));
+    return user == null;
+  }
 }
-
-// const _uuid = Uuid();
-final _users = <String, User>{};
-
-/// find user by email
-User? findUserByEmail(String email) {
-  return _users.values.firstWhereOrNull((user) => user.email == email);
-}
-
-/// find user by id
-User? findUserByID(String id) {
-  return _users[id];
-}
-
-/// create user
-// User? createUser({
-//   required String email,
-//   required String hashedPassword,
-//   required String firstname,
-//   required String lastname,
-//   String? referralCode,
-// }) {
-//   final id = _uuid.v4();
-//   final user = User(
-//     id: id,
-//     email: email,
-//     hashedPassword: hashedPassword,
-//     firstname: firstname,
-//     lastname: lastname,
-//     referralCode: referralCode,
-//   );
-//   _users[id] = user;
-//   return user;
-// }

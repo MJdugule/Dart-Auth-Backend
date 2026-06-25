@@ -1,8 +1,11 @@
 import 'package:bcrypt/bcrypt.dart';
+import 'package:dart_auth_backend/src/core/services/email_service.dart';
 import 'package:dart_auth_backend/src/core/services/token_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
+
+import '../../../../main.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   if (context.request.method != HttpMethod.post) {
@@ -14,6 +17,7 @@ Future<Response> onRequest(RequestContext context) async {
 
   // try {
   final body = await context.request.json() as Map<String, dynamic>;
+  final authService = AuthService(globalRedis, EmailService());
 
   final validationErrors = AuthValidators.validateLoginBody(body);
   if (validationErrors != null) {
@@ -32,12 +36,14 @@ Future<Response> onRequest(RequestContext context) async {
   final email = body['email'] as String;
   final password = body['password'] as String;
 
-  final user = findUserByEmail(email);
-  if (user == null || !BCrypt.checkpw(password, user.hashedPassword ?? '')) {
+  final user =
+      await authService.findUserByEmail(globalMongo, email);
+  if (user == null ||
+      !BCrypt.checkpw(password, user.hashedPassword ?? '')) {
     return Response.json(
-      statusCode: 401,
+      statusCode: 400,
       body: {
-        'statusCode': 401,
+        'statusCode': 400,
         'success': false,
         'message': 'Unable to login',
         'data': null,
@@ -48,23 +54,17 @@ Future<Response> onRequest(RequestContext context) async {
 
   final tokens = TokenService.generateTokenPair(user.id, user.email);
 
+
   return Response.json(
     body: {
       'statusCode': 200,
       'success': true,
       'message': 'Successfully logged in',
       'data': {
-        'user': user.toJson(),
+        'user': user.toJsonForUser(),
         'accessToken': tokens['accessToken'],
         'refreshToken': tokens['refreshToken'],
       },
     },
   );
-  // } catch (e) {
-  //   return Response.json(
-  //     statusCode:
-  //         400, // Bad Request is more appropriate for missing/malformed payloads
-  //     body: {'data': null, 'error': 'Invalid or missing JSON payload'},
-  //   );
-  // }
 }

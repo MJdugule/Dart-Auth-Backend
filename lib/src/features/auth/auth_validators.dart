@@ -122,4 +122,26 @@ extension AuthValidators on Validator {
 
     return errors.isEmpty ? null : errors;
   }
+
+  /// Validates delete-account payload
+  static Map<String, String>? validateDeleteAccountPayload(
+    Map<String, dynamic> body,
+  ) {
+    final errors = <String, String>{};
+
+    const allowedFields = ['password'];
+    final structuralError = Validators.checkUnknownKeys(body, allowedFields);
+    if (structuralError != null) {
+      errors['body'] = structuralError;
+      return errors;
+    }
+
+    final password = body['password'] as String?;
+    final passwordError = Validators.notEmpty()(password);
+    if (passwordError != null) {
+      errors['password'] = passwordError;
+    }
+
+    return errors.isEmpty ? null : errors;
+  }
 }

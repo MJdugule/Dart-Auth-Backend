@@ -34,7 +34,36 @@ Future<Response> onRequest(RequestContext context) async {
   // final userEnteredOtp = (body['otp'] as String).trim();
   // final emailService = EmailService();
   final authService = AuthService(globalRedis, EmailService());
-  await authService.generateAndSendOtp(email: email, name: firstname);
+
+  final canSendOtp = await authService.canSendOtp(email);
+  if (!canSendOtp) {
+    return Response.json(
+      statusCode: HttpStatus.tooManyRequests,
+      body: {
+        'statusCode': HttpStatus.tooManyRequests,
+        'data': null,
+        'error': 'Please wait before requesting another OTP. '
+            'Try again in 60 seconds.',
+      },
+    );
+  }
+
+  final sent = await authService.generateAndSendOtp(
+    email: email,
+    name: firstname,
+  );
+
+  if (!sent) {
+    return Response.json(
+      statusCode: HttpStatus.internalServerError,
+      body: {
+        'statusCode': HttpStatus.internalServerError,
+        'data': null,
+        'error': 'Failed to send OTP email. Please try again.',
+      },
+    );
+  }
+
   return Response.json(
     body: {
       'statusCode': 200,

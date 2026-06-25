@@ -36,24 +36,34 @@ Future<Response> onRequest(RequestContext context) async {
   final otp = body['otp'] as String;
   final referralCode = body['referralCode'] as String?;
 
-  // if (email == null ||
-  //     email.isEmpty ||
-  //     password == null ||
-  //     password.isEmpty) {
-  //   return Response.json(
-  //     statusCode: 401,
-  //     body: {'data': null, 'error': 'Email and password are required'},
-  //   );
-  // }
-
-  if (findUserByEmail(email) != null) {
+  final authService = AuthService(globalRedis, EmailService());
+  final user = await authService.findUserByEmail(globalMongo, email);
+  if (user != null) {
     return Response.json(
-      statusCode: 401,
-      body: {'data': null, 'error': 'User already exists'},
+      statusCode: 400,
+      body: {
+        'statusCode': 400,
+        'data': null,
+        'error': 'User with this email already exists',
+      },
     );
   }
 
-  final authService = AuthService(globalRedis, EmailService());
+  final isOtpValid = await authService.verifyOtpCode(
+    email: email,
+    submittedOtp: otp,
+  );
+  if (!isOtpValid) {
+    return Response.json(
+      statusCode: HttpStatus.badRequest, // 400
+      body: {
+        'statusCode': 400,
+        'data': null,
+        'error': 'The verification code is invalid or has expired.',
+        'message': 'The verification code is invalid or has expired.',
+      },
+    );
+  }
 
   final createdUser = await authService.verifyAndRegisterUser(
     globalMongo,
@@ -71,17 +81,21 @@ Future<Response> onRequest(RequestContext context) async {
       body: {
         'statusCode': 400,
         'data': null,
-        'error': 'Invalid verification match',
+        'error': 'Unable to register user',
         'message': 'The verification code is invalid or has expired.',
       },
     );
   }
 
   final tokens = TokenService.generateTokenPair(
-    createdUser.id ,
+    createdUser.id,
     createdUser.email,
   );
 
+  await EmailService().sendWelcomeEmail(
+    email: createdUser.email,
+    name: createdUser.firstname,
+  );
   return Response.json(
     statusCode: HttpStatus.created, // 201 Created
     body: {
@@ -89,61 +103,10 @@ Future<Response> onRequest(RequestContext context) async {
       'success': true,
       'message': 'User registration completed successfully.',
       'data': {
-        'user': createdUser.toJson(),
+        'user': createdUser.toJsonForUser(),
         'accessToken': tokens['accessToken'],
         'refreshToken': tokens['refreshToken'],
       },
     },
   );
-
-  // final otp = EmailService.generateOtp();
-  // final accessToken = TokenService.generateRegistrationToken(
-  //   firstname: firstname,
-  //   lastname: lastname,
-  //   email: email,
-  //   hashedPassword: passwordHash,
-  //   otp: otp,
-  //   referralCode: referralCode,
-  // );
-
-  // await EmailService.sendOtpEmail(email: email, name: firstname, otp: otp);
-
-  // final user = createUser(
-  //   email: email,
-  //   hashedPassword: passwordHash,
-  //   firstname: firstname,
-  //   lastname: lastname,
-  //   referralCode: referralCode,
-  // );
-
-  // final tokens = TokenService.generateTokenPair(
-  //   user?.id ?? '',
-  //   user?.email ?? '',
-  // );
-
-  // return Response.json(
-  //   body: {
-  //     'statusCode': 200,
-  //     'success': true,
-  //     'message': 'S',
-  //     // 'data': {
-  //     // 'user': user?.toJson(),
-  //     // 'registrationToken': accessToken,
-  //     // 'refreshToken': tokens['refreshToken'],
-  //     // },
-  //   },
-  // );
-  // } catch (e) {
-  //   return Response.json(
-  //     statusCode: 401,
-  //     body: {
-  //       'data': null,
-  //       'body': {
-  //         'statusCode': 400,
-  //         'data': null,
-  //         'error': 'Invalid or missing JSON payload',
-  //       },
-  //     },
-  //   );
-  // }
 }
