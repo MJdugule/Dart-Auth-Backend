@@ -22,6 +22,20 @@ Future<Response> onRequest(RequestContext context) async {
 
   final authHeader = context.request.headers['authorization']!;
   final resetToken = authHeader.substring('Bearer '.length).trim();
+  final usedTokenKey = 'used-reset-token:$resetToken';
+
+  final alreadyUsed = await globalRedis.getValue(usedTokenKey);
+  if (alreadyUsed != null) {
+    return Response.json(
+      statusCode: HttpStatus.unauthorized,
+      body: {
+        'statusCode': HttpStatus.unauthorized,
+        'data': null,
+        'error': 'Unauthorized: Used or expired reset token.',
+      },
+    );
+  }
+
   final jwt = TokenService.verifyResetToken(resetToken);
   if (jwt == null) {
     return Response.json(
@@ -80,6 +94,12 @@ Future<Response> onRequest(RequestContext context) async {
       },
     );
   }
+
+  await globalRedis.setValue(
+    key: usedTokenKey,
+    value: 'used',
+    duration: const Duration(minutes: 15),
+  );
 
   return Response.json(
     body: {
