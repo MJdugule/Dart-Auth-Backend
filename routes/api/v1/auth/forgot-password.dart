@@ -16,20 +16,20 @@ Future<Response> onRequest(RequestContext context) async {
         'statusCode': HttpStatus.methodNotAllowed,
         'data': null,
         'error': 'Method not found',
-      },
+      }
     );
   }
 
   final authHeader = context.request.headers['authorization']!;
-  final accessToken = authHeader.substring('Bearer '.length).trim();
-  final jwt = TokenService.verifyToken(accessToken, isRefresh: false);
+  final resetToken = authHeader.substring('Bearer '.length).trim();
+  final jwt = TokenService.verifyResetToken(resetToken);
   if (jwt == null) {
     return Response.json(
       statusCode: HttpStatus.unauthorized,
       body: {
         'statusCode': HttpStatus.unauthorized,
         'data': null,
-        'error': 'Unauthorized: Invalid or expired access token.',
+        'error': 'Unauthorized: Invalid or expired reset token.',
       },
     );
   }

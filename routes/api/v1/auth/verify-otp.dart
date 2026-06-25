@@ -71,7 +71,7 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-    final resetToken = TokenService.generateTokenPair(
+    final resetToken = TokenService.generateResetToken(
       user.id,
       user.email,
     );
@@ -84,7 +84,7 @@ Future<Response> onRequest(RequestContext context) async {
         'data': {
           'email': user.email,
           'purpose': 'password_reset',
-          'resetToken': resetToken['accessToken'],
+          'resetToken': resetToken,
         },
       },
     );

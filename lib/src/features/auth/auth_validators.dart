@@ -111,7 +111,7 @@ extension AuthValidators on Validator {
   ) {
     final errors = <String, String>{};
 
-    const allowedFields = ['email', 'otp', 'otpKey', 'purpose'];
+    const allowedFields = ['email', 'otp', 'purpose'];
     final structuralError = Validators.checkUnknownKeys(body, allowedFields);
     if (structuralError != null) {
       errors['body'] = structuralError;
