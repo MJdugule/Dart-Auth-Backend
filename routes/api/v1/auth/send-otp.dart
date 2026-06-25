@@ -4,8 +4,6 @@ import 'package:dart_auth_backend/src/core/services/email_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:uuid/uuid.dart';
-
 import '../../../../main.dart';
 
 Future<Response> onRequest(RequestContext context) async {
@@ -96,7 +94,7 @@ final cachedOtp = await globalRedis.getValue('otp:$email');
       'success': true,
       'message': 'Verify your email to continue',
       'data': {
-        'otp': cachedOtp, // For testing purposes only. Remove in production.
+        'otp': cachedOtp,
       },
     },
   );

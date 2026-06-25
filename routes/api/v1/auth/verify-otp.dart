@@ -38,7 +38,6 @@ Future<Response> onRequest(RequestContext context) async {
   final email = (body['email'] as String).trim();
   final submittedOtp = (body['otp'] as String).trim();
   final purpose = (body['purpose'] as String?)?.trim() ?? '';
-  final otpKey = (body['otpKey'] as String?)?.trim();
   final authService = AuthService(globalRedis, EmailService());
 
   
