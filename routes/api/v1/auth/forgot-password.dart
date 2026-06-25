@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dart_auth_backend/src/core/services/email_service.dart';
@@ -10,7 +9,7 @@ import 'package:dart_frog/dart_frog.dart';
 import '../../../../main.dart';
 
 Future<Response> onRequest(RequestContext context) async {
-  if (context.request.method != HttpMethod.delete) {
+  if (context.request.method != HttpMethod.post) {
     return Response.json(
       statusCode: HttpStatus.methodNotAllowed,
       body: {
@@ -24,20 +23,19 @@ Future<Response> onRequest(RequestContext context) async {
   final authHeader = context.request.headers['authorization']!;
   final accessToken = authHeader.substring('Bearer '.length).trim();
   final jwt = TokenService.verifyToken(accessToken, isRefresh: false);
-  if (jwt == null ||
-      (jwt.payload as Map<String, dynamic>)['type'] != 'access') {
+  if (jwt == null) {
     return Response.json(
       statusCode: HttpStatus.unauthorized,
       body: {
         'statusCode': HttpStatus.unauthorized,
         'data': null,
-        'error': 'Invalid or expired access token.',
+        'error': 'Unauthorized: Invalid or expired access token.',
       },
     );
   }
 
   final body = await context.request.json() as Map<String, dynamic>;
-  final validationErrors = AuthValidators.validateDeleteAccountPayload(body);
+  final validationErrors = AuthValidators.validateForgotPasswordPayload(body);
   if (validationErrors != null) {
     return Response.json(
       statusCode: HttpStatus.unprocessableEntity,
@@ -51,10 +49,10 @@ Future<Response> onRequest(RequestContext context) async {
   }
 
   final userId = (jwt.payload as Map<String, dynamic>)['id'] as String;
-  final password = (body['password'] as String).trim();
-
+  final newPassword = (body['newPassword'] as String).trim();
   final authService = AuthService(globalRedis, EmailService());
   final user = await authService.findUserById(globalMongo, userId);
+
   if (user == null) {
     return Response.json(
       statusCode: HttpStatus.notFound,
@@ -66,42 +64,31 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-  if (!TokenService.verifyPassword(password, user.hashedPassword ?? '')) {
-    return Response.json(
-      statusCode: HttpStatus.badRequest,
-      body: {
-        'statusCode': HttpStatus.badRequest,
-        'data': null,
-        'error': 'Invalid password.',
-      },
-    );
-  }
+  final updated = await authService.updateUserPasswordById(
+    globalMongo,
+    id: user.id,
+    newPassword: newPassword,
+  );
 
-  final deleted = await authService.deleteUserById(globalMongo, userId);
-  if (!deleted) {
+  if (!updated) {
     return Response.json(
       statusCode: HttpStatus.internalServerError,
       body: {
         'statusCode': HttpStatus.internalServerError,
         'data': null,
-        'error': 'Unable to delete account at this time.',
+        'error': 'Failed to reset password. Please try again.',
       },
     );
   }
-
-  unawaited(
-    EmailService().sendGoodbyeEmail(
-      email: user.email,
-      name: user.firstname,
-    ),
-  );
 
   return Response.json(
     body: {
       'statusCode': HttpStatus.ok,
       'success': true,
-      'message': 'Account deleted successfully.',
-      'data': null,
+      'message': 'Password reset successfully. Login with your new password.',
+      // 'data': {
+      //   'userId': user.id,
+      // },
     },
   );
 }

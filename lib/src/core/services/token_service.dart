@@ -14,33 +14,7 @@ class TokenService {
   // Tokens configuration section
   static const _accessSecret = 'your-ultra-secure-access-secret-key';
   static const _refreshSecret = 'your-ultra-secure-refresh-secret-key';
-  static const _registrationSecret =
-      'your-stateless-registration-token-secret-key';
 
-  ///For registration purpose
-  static String generateRegistrationToken({
-    required String firstname,
-    required String lastname,
-    required String email,
-    required String hashedPassword,
-    required String otp,
-    String? referralCode,
-  }) {
-    final jwt = JWT({
-      'email': email,
-      'hashedPassword': hashedPassword,
-      'firstname': firstname,
-      'lastname': lastname,
-      'referralCode': referralCode,
-      'otp': otp,
-      'purpose': 'registration',
-    });
-
-    return jwt.sign(
-      SecretKey(_registrationSecret),
-      // expiresIn: const Duration(minutes: 10),
-    );
-  }
 
   /// generate tokens
   static Map<String, String> generateTokenPair(String userId, String email) {
@@ -64,21 +38,6 @@ class TokenService {
     );
 
     return {'accessToken': accessToken, 'refreshToken': refreshToken};
-  }
-
-  ///verify registration token
-  static JWT? verifyEmailToken(String token) {
-    try {
-      final jwt = JWT.verify(token, SecretKey(_registrationSecret));
-      final payload = jwt.payload as Map<String, dynamic>;
-
-      if (payload['purpose'] == 'registration') {
-        return jwt;
-      }
-      return null;
-    } catch (_) {
-      return null;
-    }
   }
 
   ///verify tokens

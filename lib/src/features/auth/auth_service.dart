@@ -127,4 +127,24 @@ class AuthService {
     final user = await usersCollection.findOne(where.eq('id', id));
     return user == null;
   }
+
+  /// update user password by id
+  Future<bool> updateUserPasswordById(
+    Db mongoDb, {
+    required String id,
+    required String newPassword,
+  }) async {
+    final usersCollection = mongoDb.collection('users');
+    final hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+
+    await usersCollection.updateOne(
+      where.eq('id', id),
+      modify
+          .set('hashedPassword', hashedPassword)
+          .set('updatedAt', DateTime.now().toIso8601String()),
+    );
+
+    final user = await usersCollection.findOne(where.eq('id', id));
+    return user != null && user['hashedPassword'] == hashedPassword;
+  }
 }

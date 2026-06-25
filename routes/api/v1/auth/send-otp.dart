@@ -1,8 +1,10 @@
 import 'dart:io';
+
 import 'package:dart_auth_backend/src/core/services/email_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_service.dart';
 import 'package:dart_auth_backend/src/features/auth/auth_validators.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../main.dart';
 
@@ -14,11 +16,7 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-
-
   final body = await context.request.json() as Map<String, dynamic>;
-  final email = body['email'] as String;
-  final firstname = body['firstname'] as String? ?? '';
   final validationErrors = AuthValidators.validateVerifyPayload(body);
   if (validationErrors != null) {
     return Response.json(
@@ -31,9 +29,27 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
+  final email = (body['email'] as String).trim();
+  final firstname = body['firstname'] as String? ?? '';
+  final purpose = (body['purpose'] as String?)?.trim() ?? '';
+
   // final userEnteredOtp = (body['otp'] as String).trim();
   // final emailService = EmailService();
   final authService = AuthService(globalRedis, EmailService());
+
+  if (purpose == 'password_reset') {
+    final user = await authService.findUserByEmail(globalMongo, email);
+    if (user == null) {
+      return Response.json(
+        statusCode: HttpStatus.notFound,
+        body: {
+          'statusCode': HttpStatus.notFound,
+          'data': null,
+          'error': 'User with this email does not exist.',
+        },
+      );
+    }
+  }
 
   final canSendOtp = await authService.canSendOtp(email);
   if (!canSendOtp) {
@@ -64,18 +80,24 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
+  // String? otpKey;
+  // if (purpose == 'password_reset') {
+  //   otpKey = const Uuid().v4();
+  //   await globalRedis.setValue(
+  //     key: 'otp-key:$otpKey',
+  //     value: email,
+  //     duration: const Duration(minutes: 5),
+  //   );
+  // }
+final cachedOtp = await globalRedis.getValue('otp:$email');
   return Response.json(
     body: {
       'statusCode': 200,
       'success': true,
-      'message':
-          'Verify your email to continue',
-      // 'data': {
-        // 'user': user?.toJson(),
-        // 'registrationToken': accessToken,
-        // 'refreshToken': tokens['refreshToken'],
-      // },
+      'message': 'Verify your email to continue',
+      'data': {
+        'otp': cachedOtp, // For testing purposes only. Remove in production.
+      },
     },
   );
-
 }

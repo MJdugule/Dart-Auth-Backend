@@ -83,7 +83,7 @@ extension AuthValidators on Validator {
   static Map<String, String>? validateVerifyPayload(Map<String, dynamic> body) {
     final errors = <String, String>{};
 
-    const fields = ['email', 'firstname'];
+    const fields = ['email', 'firstname', 'purpose'];
     final structuralError = Validators.checkUnknownKeys(body, fields);
     if (structuralError != null) {
       errors['body'] = structuralError;
@@ -94,6 +94,14 @@ extension AuthValidators on Validator {
     final emailError = Validators.email()(email);
     if (emailError != null) errors['email'] = emailError;
 
+    final purpose = body['purpose'] as String?;
+    if (purpose != null &&
+        purpose != 'registration' &&
+        purpose != 'password_reset') {
+      errors['purpose'] =
+          'Purpose must be either "registration" or "password_reset".';
+    }
+
     return errors.isEmpty ? null : errors;
   }
 
@@ -103,7 +111,7 @@ extension AuthValidators on Validator {
   ) {
     final errors = <String, String>{};
 
-    const allowedFields = ['email', 'otp'];
+    const allowedFields = ['email', 'otp', 'otpKey', 'purpose'];
     final structuralError = Validators.checkUnknownKeys(body, allowedFields);
     if (structuralError != null) {
       errors['body'] = structuralError;
@@ -118,6 +126,14 @@ extension AuthValidators on Validator {
     final otpError = Validators.otp()(otp);
     if (otpError != null) {
       errors['otp'] = otpError;
+    }
+
+    final purpose = body['purpose'] as String?;
+    if (purpose != null &&
+        purpose != 'registration' &&
+        purpose != 'password_reset') {
+      errors['purpose'] =
+          'Purpose must be either "registration" or "password_reset".';
     }
 
     return errors.isEmpty ? null : errors;
@@ -140,6 +156,37 @@ extension AuthValidators on Validator {
     final passwordError = Validators.notEmpty()(password);
     if (passwordError != null) {
       errors['password'] = passwordError;
+    }
+
+    return errors.isEmpty ? null : errors;
+  }
+
+  /// Validates forgot-password payload
+  static Map<String, String>? validateForgotPasswordPayload(
+    Map<String, dynamic> body,
+  ) {
+    final errors = <String, String>{};
+
+    const allowedFields = ['newPassword', 'confirmPassword'];
+    final structuralError = Validators.checkUnknownKeys(body, allowedFields);
+    if (structuralError != null) {
+      errors['body'] = structuralError;
+      return errors;
+    }
+
+    final newPassword = body['newPassword'] as String?;
+    final confirmPassword = body['confirmPassword'] as String?;
+
+    final newPasswordError = Validators.password()(newPassword);
+    if (newPasswordError != null) {
+      errors['newPassword'] = newPasswordError;
+    }
+
+    final confirmPasswordError = Validators.confirmPass(newPassword ?? '')(
+      confirmPassword,
+    );
+    if (confirmPasswordError != null) {
+      errors['confirmPassword'] = confirmPasswordError;
     }
 
     return errors.isEmpty ? null : errors;
