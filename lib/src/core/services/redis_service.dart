@@ -12,7 +12,6 @@ class RedisService {
       _command = await conn.connect(host, port);
       print('🚀 Connected to Redis at $host:$port successfully.');
     } catch (e) {
-      print('❌ Failed to connect to Redis: $e');
       rethrow;
     }
   }

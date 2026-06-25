@@ -67,7 +67,7 @@ class User {
       firstname: firstname ?? this.firstname,
       lastname: lastname ?? this.lastname,
       hashedPassword: hashedPassword ?? this.hashedPassword,
-      referralCode: referralCode ?? this.referralCode, // Note: Added missing assignment from your original copyWith
+      referralCode: referralCode ?? this.referralCode,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );

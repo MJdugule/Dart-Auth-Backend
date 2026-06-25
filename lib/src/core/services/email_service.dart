@@ -58,7 +58,7 @@ class EmailService {
       ''';
 
     try {
-      await send(message, smtpServer);
+      // await send(message, smtpServer);
       return true;
     } catch (e) {
       return false;

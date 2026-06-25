@@ -78,15 +78,6 @@ Future<Response> onRequest(RequestContext context) async {
     );
   }
 
-  // String? otpKey;
-  // if (purpose == 'password_reset') {
-  //   otpKey = const Uuid().v4();
-  //   await globalRedis.setValue(
-  //     key: 'otp-key:$otpKey',
-  //     value: email,
-  //     duration: const Duration(minutes: 5),
-  //   );
-  // }
 final cachedOtp = await globalRedis.getValue('otp:$email');
   return Response.json(
     body: {
