@@ -191,4 +191,41 @@ extension AuthValidators on Validator {
 
     return errors.isEmpty ? null : errors;
   }
+
+  /// Validates change-password payload
+  static Map<String, String>? validateChangePasswordBody(
+    Map<String, dynamic> body,
+  ) {
+    final errors = <String, String>{};
+
+    const allowedFields = ['oldPassword', 'newPassword', 'confirmPassword'];
+    final structuralError = Validators.checkUnknownKeys(body, allowedFields);
+    if (structuralError != null) {
+      errors['body'] = structuralError;
+      return errors;
+    }
+
+    final oldPassword = body['oldPassword'] as String?;
+    final newPassword = body['newPassword'] as String?;
+    final confirmPassword = body['confirmPassword'] as String?;
+
+    final oldPasswordError = Validators.notEmpty()(oldPassword);
+    if (oldPasswordError != null) {
+      errors['oldPassword'] = oldPasswordError;
+    }
+
+    final newPasswordError = Validators.password()(newPassword);
+    if (newPasswordError != null) {
+      errors['newPassword'] = newPasswordError;
+    }
+
+    final confirmPasswordError = Validators.confirmPass(newPassword ?? '')(
+      confirmPassword,
+    );
+    if (confirmPasswordError != null) {
+      errors['confirmPassword'] = confirmPasswordError;
+    }
+
+    return errors.isEmpty ? null : errors;
+  }
 }

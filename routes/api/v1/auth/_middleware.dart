@@ -6,7 +6,10 @@ Handler middleware(Handler handler) {
   return (context) async {
     final path = context.request.uri.path;
     final isProtectedRoute =
-        path.endsWith('/forgot-password') || path.endsWith('/delete-account');
+        path.endsWith('/forgot-password') ||
+        path.endsWith('/delete-account') ||
+        path.endsWith('/refresh-token') ||
+        path.endsWith('/change-password');
 
     if (isProtectedRoute) {
       final authHeader = context.request.headers['authorization'];
